@@ -134,7 +134,7 @@ def draw(terminal):
         terminal.addstr(8, cent_x, state["status"][:width-1])
 
         if state["status"] == "5 mins till next class" and not state["noftified"]:
-            toast.show_toast("Class reminder",'noftified',duration=10)
+            toast.show_toast("Class reminder",'5 mins till next class, check terminal for ID and password',duration=10)
             state["noftified"] = True
 
         terminal.move(0,0)
