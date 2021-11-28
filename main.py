@@ -2,6 +2,8 @@ import datetime as dt
 import pandas as pd
 from win10toast import ToastNotifier
 import curses
+import pyperclip
+import sys
 
 def subtract_time(t1, t2):
     date = dt.date(1,1,1)
@@ -16,7 +18,12 @@ def t_to_s(t):
 
 schedule = pd.read_excel('./datas/schedule.xlsx')
 desc = pd.read_excel('./datas/courses_desc.xlsx')
-today_sche = schedule[["start_time", 2]]
+# weekday = dt.datetime.now().weekday()
+# if weekday == 6:
+#     print("it's Sunday, you have no class today")
+#     sys.exit()
+# else:
+#     today_sche = schedule[["start_time", weekday]]
 
 # use ( dt.datetime.now().time() ) to get current time
 
@@ -42,6 +49,28 @@ def draw(terminal):
     height, width = 11, 60
     k = 0
 
+    terminal.clear()
+    terminal.refresh()
+    
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+
+    weekday = dt.datetime.now().weekday()
+    if weekday == 6:
+        terminal.clear()
+        curses.resize_term(height, width)
+        terminal.border(0)
+        string = "It's Sunday, you don't have classes"
+        substring = "press 'q' to exit program"
+        x1, y1 = get_center_pos(string, width, height)
+        terminal.addstr(y1 - 1, x1, string)
+        x2, y2 = get_center_pos(substring, width, height)
+        terminal.addstr(y2, x2, substring)
+        if terminal.getch() == ord('q'):
+            sys.exit()
+    else:
+        today_sche = schedule[["start_time", weekday]]
+    
     for i in range(8):
         t_next = today_sche.iloc[i, 0]
         if t_prev <= t_now < t_next:
@@ -49,13 +78,8 @@ def draw(terminal):
         t_prev = t_next
     else:
         state["status"] = "school already ended"
-    
-    terminal.clear()
-    terminal.refresh()
-    terminal.nodelay(True)
 
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    terminal.nodelay(True)
 
     while Running:
         t_now = dt.datetime.now().time()
@@ -72,7 +96,7 @@ def draw(terminal):
 
         # Declaration of string
         title = "Online classes reminder Version 1.0"[:width - 1]
-        subtitle = "by Minh Pham Dinh"[:width - 1]
+        subtitle = "by Minh Pham Dinh-press q to exit"[:width - 1]
         time = t_now.strftime("%H:%M:%S")[:width - 1]
         next = "[*] Next class:"[:width - 1]
         Teacher = "[*] Teacher:"[:width - 1]
@@ -103,7 +127,6 @@ def draw(terminal):
             string = "no more classes, press 'q' to exit program"
             x, y = get_center_pos(string, width, height)
             terminal.addstr(y, x, string)
-
         else:
             # check for state
             if s_now < s_next - break_duration:
@@ -116,6 +139,7 @@ def draw(terminal):
             else:
                 i += 1
 
+            print(class_next) 
             data = desc[desc["CODE"] == class_next]
             class_name = data["NAME"].values[0]
             teacher_name = data["TEACHER"].values[0]
@@ -140,7 +164,8 @@ def draw(terminal):
             terminal.addstr(8, cent_x, state["status"][:width-1])
 
             if state["status"] == "5 mins till next class" and not state["noftified"]:
-                toast.show_toast("Class reminder",'5 mins till next class, check terminal for ID and password',duration=10)
+                pyperclip.copy(f'{ID_str} {Pass_str}')
+                toast.show_toast("Class reminder",'5 mins till next class, ID and pass has been copied into clipboard',duration=10)
                 state["noftified"] = True
 
         terminal.move(0,0)
