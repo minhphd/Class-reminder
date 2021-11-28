@@ -14,9 +14,9 @@ def t_to_s(t):
     return t.hour * 3600 + t.minute * 60 + t.second
 
 
-schedule = pd.read_excel('./Class-reminder/datas/schedule.xlsx')
-desc = pd.read_excel('./Class-reminder/datas/courses_desc.xlsx')
-today_sche = schedule[["start_time", dt.datetime.now().weekday()]]
+schedule = pd.read_excel('./datas/schedule.xlsx')
+desc = pd.read_excel('./datas/courses_desc.xlsx')
+today_sche = schedule[["start_time", 2]]
 
 # use ( dt.datetime.now().time() ) to get current time
 
@@ -40,7 +40,8 @@ def draw(terminal):
     break_duration = 600
     t_prev = dt.time(0,0,0)
     height, width = 11, 60
-    
+    k = 0
+
     for i in range(8):
         t_next = today_sche.iloc[i, 0]
         if t_prev <= t_now < t_next:
@@ -51,6 +52,7 @@ def draw(terminal):
     
     terminal.clear()
     terminal.refresh()
+    terminal.nodelay(True)
 
     curses.start_color()
     curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
@@ -62,18 +64,11 @@ def draw(terminal):
         s_next = t_to_s(t_next)
         class_next = today_sche.iloc[i, 1]
 
+        k = terminal.getch()
         # Initialization
         terminal.clear()
         curses.resize_term(height, width)
         terminal.border(0)
-
-        # check if final class
-        if pd.isnull(class_next):
-            string = "no more classes, press 'q' to exit program"
-            x, y = get_center_pos(string, width, height)
-            terminal.addstr(y, x, string)
-            if terminal.getch() == ord('q'):
-                break
 
         # Declaration of string
         title = "Online classes reminder Version 1.0"[:width - 1]
@@ -99,43 +94,54 @@ def draw(terminal):
         terminal.attroff(curses.color_pair(1))
         terminal.attroff(curses.A_STANDOUT)
 
-        # check for state
-        if s_now < s_next - break_duration:
-            state["status"] = "in class"
-        elif s_now < s_next - break_duration/2:
-            state["status"] = "break time"
-            state["noftified"] = False
-        elif s_now < s_next:
-            state["status"] = "5 mins till next class"
+        if k == ord('q'):
+            Running = False
+            break
+
+        # check if final class
+        if pd.isnull(class_next):
+            string = "no more classes, press 'q' to exit program"
+            x, y = get_center_pos(string, width, height)
+            terminal.addstr(y, x, string)
+
         else:
-            i += 1
+            # check for state
+            if s_now < s_next - break_duration:
+                state["status"] = "in class"
+            elif s_now < s_next - break_duration/2:
+                state["status"] = "break time"
+                state["noftified"] = False
+            elif s_now < s_next:
+                state["status"] = "5 mins till next class"
+            else:
+                i += 1
 
-        data = desc[desc["CODE"] == class_next]
-        class_name = data["NAME"].values[0]
-        teacher_name = data["TEACHER"].values[0]
-        ID_str = str(data["ID"].values[0])
-        Pass_str = str(data["PASS"].values[0])
-        eta_str = str(subtract_time(t_now, t_next))[:7][:width -1]
+            data = desc[desc["CODE"] == class_next]
+            class_name = data["NAME"].values[0]
+            teacher_name = data["TEACHER"].values[0]
+            ID_str = str(data["ID"].values[0])
+            Pass_str = str(data["PASS"].values[0])
+            eta_str = str(subtract_time(t_now, t_next))[:7][:width -1]
 
-        #add remaining strings
-        terminal.addstr(3, 2, next)
-        terminal.addstr(4, 2, Teacher)
-        terminal.addstr(5, 2, ID)
-        terminal.addstr(6, 2, Pass)
-        terminal.addstr(7, 2, ETA)
-        terminal.addstr(8, 2, status)
+            #add remaining strings
+            terminal.addstr(3, 2, next)
+            terminal.addstr(4, 2, Teacher)
+            terminal.addstr(5, 2, ID)
+            terminal.addstr(6, 2, Pass)
+            terminal.addstr(7, 2, ETA)
+            terminal.addstr(8, 2, status)
 
-        #add remaining datas
-        terminal.addstr(3, cent_x, class_name)
-        terminal.addstr(4, cent_x, teacher_name)
-        terminal.addstr(5, cent_x, ID_str)
-        terminal.addstr(6, cent_x, Pass_str)
-        terminal.addstr(7, cent_x, eta_str)
-        terminal.addstr(8, cent_x, state["status"][:width-1])
+            #add remaining datas
+            terminal.addstr(3, cent_x, class_name)
+            terminal.addstr(4, cent_x, teacher_name)
+            terminal.addstr(5, cent_x, ID_str)
+            terminal.addstr(6, cent_x, Pass_str)
+            terminal.addstr(7, cent_x, eta_str)
+            terminal.addstr(8, cent_x, state["status"][:width-1])
 
-        if state["status"] == "5 mins till next class" and not state["noftified"]:
-            toast.show_toast("Class reminder",'5 mins till next class, check terminal for ID and password',duration=10)
-            state["noftified"] = True
+            if state["status"] == "5 mins till next class" and not state["noftified"]:
+                toast.show_toast("Class reminder",'5 mins till next class, check terminal for ID and password',duration=10)
+                state["noftified"] = True
 
         terminal.move(0,0)
         terminal.refresh()
