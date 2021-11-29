@@ -15,17 +15,9 @@ def subtract_time(t1, t2):
 def t_to_s(t):
     return t.hour * 3600 + t.minute * 60 + t.second
 
-
-schedule = pd.read_excel('./datas/schedule.xlsx')
-desc = pd.read_excel('./datas/courses_desc.xlsx')
-# weekday = dt.datetime.now().weekday()
-# if weekday == 6:
-#     print("it's Sunday, you have no class today")
-#     sys.exit()
-# else:
-#     today_sche = schedule[["start_time", weekday]]
-
-# use ( dt.datetime.now().time() ) to get current time
+file = pd.ExcelFile('./datas/schedule.xlsx')
+schedule = pd.read_excel(file, sheet_name="schedule")
+desc = pd.read_excel(file, sheet_name="desc")
 
 state = {
     "status": "",
@@ -96,7 +88,7 @@ def draw(terminal):
 
         # Declaration of string
         title = "Online classes reminder Version 1.0"[:width - 1]
-        subtitle = "by Minh Pham Dinh-press q to exit"[:width - 1]
+        subtitle = "by Minh Pham Dinh-press 'q' to exit"[:width - 1]
         time = t_now.strftime("%H:%M:%S")[:width - 1]
         next = "[*] Next class:"[:width - 1]
         Teacher = "[*] Teacher:"[:width - 1]
@@ -139,7 +131,6 @@ def draw(terminal):
             else:
                 i += 1
 
-            print(class_next) 
             data = desc[desc["CODE"] == class_next]
             class_name = data["NAME"].values[0]
             teacher_name = data["TEACHER"].values[0]
