@@ -1,6 +1,6 @@
 import datetime as dt
 import pandas as pd
-from win10toast import ToastNotifier
+# from win10toast import ToastNotifier
 import curses
 import pyperclip
 import sys
@@ -34,7 +34,7 @@ def draw(terminal):
     
     Running = True
     t_now = dt.datetime.now().time()
-    toast = ToastNotifier()
+    # toast = ToastNotifier()
     # class_duration = 60*40
     break_duration = 600
     t_prev = dt.time(0,0,0)
@@ -81,6 +81,7 @@ def draw(terminal):
         class_next = today_sche.iloc[i, 1]
 
         k = terminal.getch()
+        
         # Initialization
         terminal.clear()
         curses.resize_term(height, width)
@@ -156,7 +157,7 @@ def draw(terminal):
 
             if state["status"] == "5 mins till next class" and not state["noftified"]:
                 pyperclip.copy(f'{ID_str} {Pass_str}')
-                toast.show_toast("Class reminder",'5 mins till next class, ID and pass has been copied into clipboard',duration=10)
+                # toast.show_toast("Class reminder",'5 mins till next class, ID and pass has been copied into clipboard',duration=10)
                 state["noftified"] = True
 
         terminal.move(0,0)
